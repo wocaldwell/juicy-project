@@ -13,13 +13,22 @@ app = Flask(__name__)
 def render_juicy_facts():
     '''
     '''
-    juicy_products = get_all_products_by_brand_id("51db37d0176fe9790a899db2")
-    # print("----------------------")
-    # print(juicy_products)
-    juicy_total_object = json.loads(get_total_hits(juicy_products).data.decode("utf-8"))
+    juicy_products = json.loads(get_all_products_by_brand_id("51db37d0176fe9790a899db2").data.decode("utf-8"))
+    print(juicy_products)
+    juicy_total_products = juicy_products["total_hits"]
+    # juicy_total_object = json.loads(get_total_hits(juicy_products).data.decode("utf-8"))
     # print(juicy_total_object)
-    juicy_total_products = juicy_total_object["total_products"]
-    return render_template("index.html", juicy_total_products = juicy_total_products)
+    # juicy_total_products = juicy_total_object["total_products"]
+    juicy_calories = 0
+    juicy_products_with_calories = 0
+    for product in juicy_products["products"]:
+        product_fields = product["fields"]
+
+        if product_fields["nf_serving_size_unit"] == "fl oz":
+            juicy_products_with_calories = juicy_products_with_calories + 1
+            juicy_calories = juicy_calories + (product_fields["nf_calories"]/product_fields["nf_serving_size_qty"])
+    calories_per_ounce = juicy_calories / juicy_products_with_calories
+    return render_template("index.html", juicy_total_products = juicy_total_products, calories_per_ounce = calories_per_ounce)
 
 def get_all_products_by_brand_id(brand_id):
     '''
@@ -45,6 +54,8 @@ def get_all_products_by_brand_id(brand_id):
 
     # function to add each product object to all_products list
     def add_hits_to_all_products(request):
+        '''
+        '''
         for hit in request["hits"]:
             all_products.append(hit)
 
@@ -70,8 +81,12 @@ def get_all_products_by_brand_id(brand_id):
         add_hits_to_all_products(new_products_request)
         print(results_end, products_total)
     print("Number of products:", len(all_products))
-    print(all_products)
-    return products_request
+    all_products_dict = {
+        "total_hits": products_total,
+        "products": all_products
+    }
+    # all_products_json = json.load(all_products_dict)
+    return jsonify(total_hits=products_total, products=all_products)
 
 def get_total_hits(request):
     '''
@@ -83,9 +98,18 @@ def get_total_hits(request):
     Returns:
         A json object with the total amount of products for the request.
     '''
-    total_hits = request["total_hits"]
+    request_json = json.loads(request.data.decode("utf-8"))
+    total_hits = request_json["total_hits"]
     print(total_hits)
     return jsonify(total_products=total_hits)
+
+# funtion that calls api and converts the response to a json object
+def get_request_and_make_json(api_url, params):
+    '''
+    '''
+    api_request = requests.get(request_body.format(api_url, brand_id, fields, results_start, results_end, juicy_id, juicy_key)).content.decode("utf-8")
+    api_request = json.loads(api_request)
+    return api_request
 
 if __name__ == "__main__":
     app.run(debug=True)
