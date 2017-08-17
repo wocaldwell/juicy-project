@@ -13,58 +13,65 @@ app = Flask(__name__)
 def render_juicy_facts():
     '''
     '''
-    juicy_foods = get_all_food_by_brand_id("51db37d0176fe9790a899db2")
-    print("----------------------")
-    print(juicy_foods)
-    juicy_total_object = json.loads(get_total_hits(juicy_foods).data.decode("utf-8"))
-    print(juicy_total_object)
+    juicy_products = get_all_products_by_brand_id("51db37d0176fe9790a899db2")
+    # print("----------------------")
+    # print(juicy_products)
+    juicy_total_object = json.loads(get_total_hits(juicy_products).data.decode("utf-8"))
+    # print(juicy_total_object)
     juicy_total_products = juicy_total_object["total_products"]
     return render_template("index.html", juicy_total_products = juicy_total_products)
 
-def get_all_food_by_brand_id(brandId):
+def get_all_products_by_brand_id(brand_id):
     '''
+    Send a request to the nutritionix api for all products that match the brand id.
+
+    Arguments:
+        brand_id(str), an id assigned to a particular brand in the nutritionix api.
+
+    Returns:
+        products_request(json), the combined results of the nutritionix request for ALL products by the searched brand.
     '''
-    # initial request to get total number of food hits
+    # format for api request
+    request_body = "{}/?brand_id={}&fields={}&results={}:{}&appId={}&appKey={}"
+    # base url for nutritionix
     url = "https://api.nutritionix.com/v1_1/search"
-    offset = 0
-    food_request = requests.get("{}/?brand_id={}&limit=5offset={}&fields=*&appId={}&appKey={}".format(url, brandId, offset, juicy_id, juicy_key)).content.decode("utf-8")
-    food_request = json.loads(food_request)
-    return food_request
+    # fields required to complete tasks
+    fields = "item_name,nf_ingredient_statement,nf_calories,nf_serving_size_qty,nf_serving_size_unit"
+    # results by index, results_start:results_end
+    results_start = 0
+    results_end = 50
+    # list to store all products of a brand
+    all_products = []
 
-# def get_all_food_by_brand_id(brandId):
-#     '''
-#     '''
-#     url = "https://api.nutritionix.com/v1_1/search"
-#     headers = {"Content-Type": "application/json"}
-#     # data = {
-#     #     "appId": juicy_id,
-#     #     "appKey": juicy_key,
-#     #     "fields": [
-#     #         "item_name",
-#     #         "nf_ingredient_statement",
-#     #         "nf_calories",
-#     #         "nf_serving_size_qty",
-#     #         "nf_serving_size_unit"
-#     #     ],
-#     #     "offset": 0,
-#     #     "limit": 50,
-#     #     "sort": {
-#     #         "field": "item_name.sortable_na",
-#     #         "order": "desc"
-#     #     },
-#     #     "filters": {
-#     #         "brand_id": brandId
-#     #     }
-#     # }
-#     data = {
-#         "appId": juicy_id,
-#         "appKey": juicy_key,
-#         "query": '"brand_id" : "51db37d0176fe9790a899db2"'
-#     }
+    # function to add each product object to all_products list
+    def add_hits_to_all_products(request):
+        for hit in request["hits"]:
+            all_products.append(hit)
 
-#     food_request = requests.get(url, data=json.dumps(data), headers=headers)
+    # funtion that calls api and converts the response to a json object
+    def get_request_and_make_json(api_url, request_body, brand_id, fields, results_start, results_end, juicy_id, juicy_key):
+        '''
+        '''
+        api_request = requests.get(request_body.format(api_url, brand_id, fields, results_start, results_end, juicy_id, juicy_key)).content.decode("utf-8")
+        api_request = json.loads(api_request)
+        return api_request
 
-#     return food_request
+    # first call to api
+    products_request = get_request_and_make_json(url, request_body, brand_id, fields, results_start, results_end, juicy_id, juicy_key)
+    # add the hits from request to all_products list
+    add_hits_to_all_products(products_request)
+    # get the total amount of hits for the product
+    products_total = products_request["total_hits"]
+    # make additional requests until all products have been added
+    while results_end < products_total:
+        results_start = results_start + 50
+        results_end = results_end + 50
+        new_products_request = get_request_and_make_json(url, request_body, brand_id, fields, results_start, results_end, juicy_id, juicy_key)
+        add_hits_to_all_products(new_products_request)
+        print(results_end, products_total)
+    print("Number of products:", len(all_products))
+    print(all_products)
+    return products_request
 
 def get_total_hits(request):
     '''
@@ -74,7 +81,7 @@ def get_total_hits(request):
         request, the request to the nutritionix api.
 
     Returns:
-        total_hits(int), The number of hits for the api query.
+        A json object with the total amount of products for the request.
     '''
     total_hits = request["total_hits"]
     print(total_hits)
