@@ -1,6 +1,8 @@
-import os
-import requests
-import json
+import os, requests, json, re, collections
+# import requests
+# import json
+# import re
+# import collections
 from flask import Flask, render_template, jsonify
 
 # set the nutritionix api secrets from local environment variables
@@ -15,13 +17,13 @@ def render_juicy_facts():
     '''
     # get all juicy juice products from nutririonix api and decode the json data
     juicy_products = json.loads(get_all_products_by_brand_id("51db37d0176fe9790a899db2").data.decode("utf-8"))
-    print(type(juicy_products))
+    # print(juicy_products)
 
     # variable that stores answer to challenge #1
     juicy_total_products = juicy_products["total_hits"]
 
     juicy_calories_list = get_calories_per_ounce(juicy_products)
-    print(juicy_calories_list)
+    # print(juicy_calories_list)
 
     # initialize values for average calorie logic
     juicy_calories_average_total = 0
@@ -34,7 +36,12 @@ def render_juicy_facts():
     # variable that stores answer to challenge #2
     juicy_average_calories_per_ounce = get_average(total_products_with_average_calories, juicy_calories_average_total)
 
-    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = juicy_average_calories_per_ounce["average"])
+    # variable that stores answer to challenge #3
+    juicy_ingredients = get_ingredients_and_thier_products(juicy_products)
+
+    print(juicy_ingredients)
+
+    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = juicy_average_calories_per_ounce["average"], juicy_ingredients = juicy_ingredients)
 
 def get_all_products_by_brand_id(brand_id):
     '''
@@ -85,17 +92,15 @@ def get_all_products_by_brand_id(brand_id):
         results_end = results_end + 50
         new_products_request = get_request_and_make_json(url, request_body, brand_id, fields, results_start, results_end, juicy_id, juicy_key)
         add_hits_to_all_products(new_products_request)
-        print(results_end, products_total)
-    print("Number of products:", len(all_products))
     return jsonify(total_hits=products_total, products=all_products)
 
 
-def get_calories_per_ounce(juicy_json):
+def get_calories_per_ounce(juicy_drinks):
     '''
     Get the calories per ounce for all Juicy Juice products that have a serving size unit marked in fluid ounces.
 
     Arguments:
-        juicy_json(obj), all Juicy Juice products in the Nutritionix api.
+        juicy_drinks(dict), all Juicy Juice products in the Nutritionix api.
 
     Returns:
         juicy_calories_per_ounce_list(list), a list of dictionarys for all products and their calories per ounce.
@@ -104,7 +109,7 @@ def get_calories_per_ounce(juicy_json):
     juicy_calories_per_ounce_list = []
 
     # loop through products
-    for product in juicy_json["products"]:
+    for product in juicy_drinks["products"]:
         product_fields = product["fields"]
         # get the product if it serving size unit is fluid ounces
         if product_fields["nf_serving_size_unit"] == "fl oz":
@@ -130,6 +135,43 @@ def get_average(divisor, dividend):
     '''
     average = dividend / divisor
     return {"average": average}
+
+def get_ingredients_and_thier_products(juicy_products):
+    '''
+    Get all unique ingredients from the Juicy Juice products and store them along with the product that includes that ingredient.
+
+    Arguments:
+        juicy_products(dict), all Juicy Juice products in the Nutritionix api.
+
+    Returns:
+        final_ingredients_dict(dict), dictionary of common ingredient names(keys) and the list of products that include that ingredient(values).
+    '''
+    # variable to store ingredients
+    all_ingredients_dict = collections.defaultdict(list)
+    # loop through all products
+    for product in juicy_products["products"]:
+        product_fields = product["fields"]
+        ingredients = product_fields["nf_ingredient_statement"]
+        # if ingredients is not None
+        if ingredients:
+            # make all ingredient strings lower case
+            ingredients = ingredients.lower()
+            # bind ingredient list to product name (doesn't duplicate if already in dict!)
+            all_ingredients_dict[ingredients] = product_fields["item_name"]
+
+    print(len(all_ingredients_dict))
+    final_ingredients_dict = collections.defaultdict(list)
+    common_ingredients = ["apple juice", "pear juice", "grape juice", "rasberry juice", "natural flavor", "ascorbic acid", "citric acid", "orange juice", "tangerine juice", "mango puree", "malic acid", "water", "carbonation", "fish oil", "gellan gum", "strawberry juice", "banana puree", "pineapple juice", "watermelon juice", "kiwi juice", "cherry juice", "tangerine juice", "carrot juice", "sweet potato puree", "gum acacia", "beta carotene", "passion fruit juice", "lemon juice", "cranberry juice", "peach juice", "peach puree", "vegetable juice", "pectin"]
+    for ingredient, product in all_ingredients_dict.items():
+        for common in common_ingredients:
+            if common in ingredient:
+                final_ingredients_dict[common].append(product)
+
+    print(len(final_ingredients_dict))
+    return final_ingredients_dict
+
+
+
 
 # def get_total_hits(request):
 #     '''

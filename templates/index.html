@@ -28,6 +28,21 @@
         <h2 id="calories">Juicy Calories</h2>
             <p>Did you know that on average, Juicy Juice drinks have {{average_calories_per_ounce}} calories per ounce?</p>
         <h2 id="ingredients">Juicy Ingredients</h2>
+            <p>Here's all of the most common Juicy Juice ingredients and what products they are found in.</p>
+            <table class="table table-inverse">
+                <thead>
+                    <th>Ingredient</th>
+                    <th>Products</th>
+                </thead>
+                <tbody>
+                    {% for ingredient, products in juicy_ingredients.items()%}
+                    <tr>
+                        <td>{{ingredient}}</td>
+                        <td>{{products}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         <footer class="footer row">
             <div class="col-xs-9">
                 <p>&copy; JuciyFacts 2017</p>
