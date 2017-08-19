@@ -1,8 +1,4 @@
 import os, requests, json, re, collections
-# import requests
-# import json
-# import re
-# import collections
 from flask import Flask, render_template, jsonify
 
 # set the nutritionix api secrets from local environment variables
@@ -14,6 +10,7 @@ app = Flask(__name__)
 @app.route("/", methods=["GET"])
 def render_juicy_facts():
     '''
+    Compile all of the logic and render the website when visiting url.
     '''
     # get all juicy juice products from nutririonix api and decode the json data
     juicy_products = json.loads(get_all_products_by_brand_id("51db37d0176fe9790a899db2").data.decode("utf-8"))
@@ -22,6 +19,7 @@ def render_juicy_facts():
     # variable that stores answer to challenge #1
     juicy_total_products = juicy_products["total_hits"]
 
+    # list of Juicy Juice products and their calories per ounce
     juicy_calories_list = get_calories_per_ounce(juicy_products)
     # print(juicy_calories_list)
 
@@ -41,7 +39,7 @@ def render_juicy_facts():
 
     print(juicy_ingredients)
 
-    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = juicy_average_calories_per_ounce["average"], juicy_ingredients = juicy_ingredients)
+    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = round(juicy_average_calories_per_ounce["average"], 2), juicy_ingredients = juicy_ingredients)
 
 def get_all_products_by_brand_id(brand_id):
     '''
@@ -51,7 +49,7 @@ def get_all_products_by_brand_id(brand_id):
         brand_id(str), an id assigned to a particular brand in the nutritionix api.
 
     Returns:
-        Json object, the combined results of the nutritionix request for ALL products by the searched brand.
+        Json object, the combined results of the nutritionix requests for ALL products made by the searched brand.
     '''
     # format for api request
     request_body = "{}/?brand_id={}&fields={}&results={}:{}&appId={}&appKey={}"
@@ -68,6 +66,10 @@ def get_all_products_by_brand_id(brand_id):
     # function to add each product object to all_products list
     def add_hits_to_all_products(request):
         '''
+        Loop throught the api response and add each product object to the all_products list.
+
+        Arguments:
+            request(json), a "get" request to the nutritionix api.
         '''
         for hit in request["hits"]:
             all_products.append(hit)
@@ -75,6 +77,20 @@ def get_all_products_by_brand_id(brand_id):
     # funtion that calls api and converts the response to a json object
     def get_request_and_make_json(api_url, request_body, brand_id, fields, results_start, results_end, juicy_id, juicy_key):
         '''
+        Send a "get" request to the nutritionix api and convert the results into a json object.
+
+        Arguments:
+            api_url(str), the base url.
+            request_body(str), the protion of the url that contains the request params.
+            brand_id(str), a request param for a specific brand.
+            fields(str), the fields to be included in the requested api response.
+            results_start(int), the starting number for the range of results from the "hits" array.
+            results_end(int), the ending number for the range of results from the "hits" array. Maximum is results_start + 50.
+            juicy_id(str), the app ID given to the website application by registering with nutritionix.
+            juicy_key(str), the app key given to the website application by registering with nutritionix.
+
+        Returns:
+            api_request(json), the results of the "get" request from the nutritionix api.
         '''
         api_request = requests.get(request_body.format(api_url, brand_id, fields, results_start, results_end, juicy_id, juicy_key)).content.decode("utf-8")
         api_request = json.loads(api_request)
@@ -82,16 +98,20 @@ def get_all_products_by_brand_id(brand_id):
 
     # first call to api
     products_request = get_request_and_make_json(url, request_body, brand_id, fields, results_start, results_end, juicy_id, juicy_key)
+
     # add the hits from request to all_products list
     add_hits_to_all_products(products_request)
+
     # get the total amount of hits for the product
     products_total = products_request["total_hits"]
+
     # make additional requests until all products have been added
     while results_end < products_total:
         results_start = results_start + 50
         results_end = results_end + 50
         new_products_request = get_request_and_make_json(url, request_body, brand_id, fields, results_start, results_end, juicy_id, juicy_key)
         add_hits_to_all_products(new_products_request)
+
     return jsonify(total_hits=products_total, products=all_products)
 
 
@@ -103,9 +123,9 @@ def get_calories_per_ounce(juicy_drinks):
         juicy_drinks(dict), all Juicy Juice products in the Nutritionix api.
 
     Returns:
-        juicy_calories_per_ounce_list(list), a list of dictionarys for all products and their calories per ounce.
+        juicy_calories_per_ounce_list(list), a list of dictionarys for products and their calories per ounce.
     '''
-    # list to store products and their average calories
+    # list to store products and their average calories per ounce
     juicy_calories_per_ounce_list = []
 
     # loop through products
@@ -114,17 +134,18 @@ def get_calories_per_ounce(juicy_drinks):
         # get the product if it serving size unit is fluid ounces
         if product_fields["nf_serving_size_unit"] == "fl oz":
             juicy_product = product_fields["item_name"]
-            juicy_calories = product_fields["nf_calories"]/product_fields["nf_serving_size_qty"]
+            juicy_calories_per_ounce = product_fields["nf_calories"]/product_fields["nf_serving_size_qty"]
             # add dictonary of each product and calories to list
             juicy_calories_per_ounce_list.append({
                 "product_name": juicy_product,
-                "cals_per_oz": juicy_calories
+                "cals_per_oz": juicy_calories_per_ounce
             })
+
     return juicy_calories_per_ounce_list
 
 def get_average(divisor, dividend):
     '''
-    Divide the sum of the given values in a set by their number.
+    Divide the sum of values in a set by their number.
 
     Arguments:
         divisor(int): the number of values in a set.
@@ -134,6 +155,7 @@ def get_average(divisor, dividend):
         A dictionary with the average value in it.
     '''
     average = dividend / divisor
+
     return {"average": average}
 
 def get_ingredients_and_thier_products(juicy_products):
@@ -148,6 +170,7 @@ def get_ingredients_and_thier_products(juicy_products):
     '''
     # variable to store ingredients
     all_ingredients_dict = collections.defaultdict(list)
+
     # loop through all products
     for product in juicy_products["products"]:
         product_fields = product["fields"]
@@ -156,45 +179,25 @@ def get_ingredients_and_thier_products(juicy_products):
         if ingredients:
             # make all ingredient strings lower case
             ingredients = ingredients.lower()
-            # bind ingredient list to product name (doesn't duplicate if already in dict!)
+            # bind ingredient list to product name (doesn't duplicate if already in dict:) )
             all_ingredients_dict[ingredients] = product_fields["item_name"]
-
     print(len(all_ingredients_dict))
+
+    # the dictionary that will store common ingedient names and their related products
     final_ingredients_dict = collections.defaultdict(list)
+
+    # list of common ingredient names to be used with "dirty" data
     common_ingredients = ["apple juice", "pear juice", "grape juice", "rasberry juice", "natural flavor", "ascorbic acid", "citric acid", "orange juice", "tangerine juice", "mango puree", "malic acid", "water", "carbonation", "fish oil", "gellan gum", "strawberry juice", "banana puree", "pineapple juice", "watermelon juice", "kiwi juice", "cherry juice", "tangerine juice", "carrot juice", "sweet potato puree", "gum acacia", "beta carotene", "passion fruit juice", "lemon juice", "cranberry juice", "peach juice", "peach puree", "vegetable juice", "pectin"]
+
+    # loop through all ingredient/product pairs
     for ingredient, product in all_ingredients_dict.items():
-        for common in common_ingredients:
-            if common in ingredient:
-                final_ingredients_dict[common].append(product)
+        # loop through the common ingredients
+        for common_name in common_ingredients:
+            if common_name in ingredient:
+                final_ingredients_dict[common_name].append(product)
 
     print(len(final_ingredients_dict))
     return final_ingredients_dict
-
-
-
-
-# def get_total_hits(request):
-#     '''
-#     Sets the total hits for an api query.
-
-#     Arguments:
-#         request, the request to the nutritionix api.
-
-#     Returns:
-#         A json object with the total amount of products for the request.
-#     '''
-#     request_json = json.loads(request.data.decode("utf-8"))
-#     total_hits = request_json["total_hits"]
-#     print(total_hits)
-#     return jsonify(total_products=total_hits)
-
-# # funtion that calls api and converts the response to a json object
-# def get_request_and_make_json(api_url, params):
-#     '''
-#     '''
-#     api_request = requests.get(request_body.format(api_url, brand_id, fields, results_start, results_end, juicy_id, juicy_key)).content.decode("utf-8")
-#     api_request = json.loads(api_request)
-#     return api_request
 
 if __name__ == "__main__":
     app.run(debug=True)
