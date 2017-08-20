@@ -1,5 +1,6 @@
 import os, requests, json, re, collections
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, Markup
+
 
 # set the nutritionix api secrets from local environment variables
 juicy_id = os.environ['JUICYID']
@@ -37,9 +38,20 @@ def render_juicy_facts():
     # variable that stores answer to challenge #3
     juicy_ingredients = get_ingredients_and_thier_products(juicy_products)
 
-    print(juicy_ingredients)
+    # print(juicy_ingredients)
 
-    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = round(juicy_average_calories_per_ounce["average"], 2), juicy_ingredients = juicy_ingredients)
+    ingredient_frequency = get_ingredient_frequency(juicy_ingredients)
+
+    chart_labels = ingredient_frequency.keys()
+    chart_values = ingredient_frequency.values()
+
+    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = round(juicy_average_calories_per_ounce["average"], 2), juicy_ingredients = juicy_ingredients, values=chart_values, labels=chart_labels)
+
+@app.route("/chart")
+def chart():
+    labels = [1,2,3,4,5,6,7,8]
+    values = [10,9,8,7,6,4,7,8]
+    return render_template('chart.html', values=values, labels=labels)
 
 def get_all_products_by_brand_id(brand_id):
     '''
@@ -198,6 +210,29 @@ def get_ingredients_and_thier_products(juicy_products):
 
     print(len(final_ingredients_dict))
     return final_ingredients_dict
+
+def get_ingredient_frequency(ingredients_dict):
+    '''
+    Get the percentage of products that include each of the common Juicy Juice ingredients.
+
+    Arguments:
+        ingredients_dict(dict), all common Juicy Juice ingredients and their associated products. Each association as ingredient : [product list].
+
+    Returns:
+        percent_ingredient_in_products_dict(dict), the ingredients and the amount(in percentage as int) that they occur in all tracked products.
+    '''
+    # number of products
+    total_number_of_tracked_products = 75
+
+    # dictionary to store ingedient and product frequency
+    percent_ingredient_in_products_dict = {}
+
+    for ingredient, products in ingredients_dict.items():
+        print(ingredient, len(products))
+        percent_ingredient_in_products_dict[ingredient] = int((round(len(products)/total_number_of_tracked_products, 2)) * 100)
+    print(percent_ingredient_in_products_dict)
+
+    return percent_ingredient_in_products_dict
 
 if __name__ == "__main__":
     app.run(debug=True)
