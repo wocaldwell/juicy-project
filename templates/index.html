@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <title>JuicyFacts</title>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js'></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -54,11 +56,11 @@
                 </tbody>
             </table>
         <h2 id="chartHeader">Juicy Chart</h2>
-            <p>Here are all the Juicy Juice ingredients and the percentage of products in which they are found.</p>
+            <p>Did you know that fish oil is found in {{ingredient_frequency["fish oil"]}}% of all Juicy Juice products. . . gross.</p>
+            <p>Dont worry though, here are the top ten Juicy Juice ingredients and the percentage of products in which they are found.</p>
             <div class="chartContainer">
                 <canvas id="chart"></canvas>
             </div>
-
         <footer class="footer row">
             <div class="col-xs-9">
                 <p>&copy; JuciyFacts 2017</p>

@@ -1,4 +1,4 @@
-import os, requests, json, re, collections
+import os, requests, json, re, collections, operator
 from flask import Flask, render_template, jsonify, Markup
 
 
@@ -15,14 +15,12 @@ def render_juicy_facts():
     '''
     # get all juicy juice products from nutririonix api and decode the json data
     juicy_products = json.loads(get_all_products_by_brand_id("51db37d0176fe9790a899db2").data.decode("utf-8"))
-    # print(juicy_products)
 
     # variable that stores answer to challenge #1
     juicy_total_products = juicy_products["total_hits"]
 
     # list of Juicy Juice products and their calories per ounce
     juicy_calories_list = get_calories_per_ounce(juicy_products)
-    # print(juicy_calories_list)
 
     # initialize values for average calorie logic
     juicy_calories_average_total = 0
@@ -38,14 +36,25 @@ def render_juicy_facts():
     # variable that stores answer to challenge #3
     juicy_ingredients = get_ingredients_and_thier_products(juicy_products)
 
-    # print(juicy_ingredients)
-
+    # variable for ingredients and their percentages
     ingredient_frequency = get_ingredient_frequency(juicy_ingredients)
 
-    chart_labels = ingredient_frequency.keys()
-    chart_values = ingredient_frequency.values()
+    # sort ingredient frequency by max percentage
+    sorted_ingredient_frequency = sort_ingredients_by_product_percentage(ingredient_frequency)
 
-    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = round(juicy_average_calories_per_ounce["average"], 2), juicy_ingredients = juicy_ingredients, values=chart_values, labels=chart_labels)
+    # variable for top ten ingredients by percentage
+    top_ten_ingredients = sorted_ingredient_frequency[:9]
+
+    # visualization variables
+    chart_labels = []
+    chart_values = []
+
+    # loop through top five ingredients and assign labels and values
+    for ingredient in top_ten_ingredients:
+        chart_labels.append(ingredient[0])
+        chart_values.append(ingredient[1])
+
+    return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = round(juicy_average_calories_per_ounce["average"], 2), juicy_ingredients = juicy_ingredients, values=chart_values, labels=chart_labels, ingredient_frequency=ingredient_frequency)
 
 def get_all_products_by_brand_id(brand_id):
     '''
@@ -58,9 +67,9 @@ def get_all_products_by_brand_id(brand_id):
         Json object, the combined results of the nutritionix requests for ALL products made by the searched brand.
     '''
     # format for api request
-    request_body = "{}/?brand_id={}&fields={}&results={}:{}&appId={}&appKey={}"
-    # base url for nutritionix
-    url = "https://api.nutritionix.com/v1_1/search"
+    request_body = "{}/search?brand_id={}&fields={}&results={}:{}&appId={}&appKey={}"
+    # base url for nutritionix api
+    url = "https://api.nutritionix.com/v1_1/"
     # fields required to complete tasks
     fields = "item_name,nf_ingredient_statement,nf_calories,nf_serving_size_qty,nf_serving_size_unit"
     # results by index, results_start:results_end
@@ -187,7 +196,6 @@ def get_ingredients_and_thier_products(juicy_products):
             ingredients = ingredients.lower()
             # bind ingredient list to product name (doesn't duplicate if already in dict:) )
             all_ingredients_dict[ingredients] = product_fields["item_name"]
-    print(len(all_ingredients_dict))
 
     # the dictionary that will store common ingedient names and their related products
     final_ingredients_dict = collections.defaultdict(list)
@@ -202,7 +210,6 @@ def get_ingredients_and_thier_products(juicy_products):
             if common_name in ingredient:
                 final_ingredients_dict[common_name].append(product)
 
-    print(len(final_ingredients_dict))
     return final_ingredients_dict
 
 def get_ingredient_frequency(ingredients_dict):
@@ -221,12 +228,22 @@ def get_ingredient_frequency(ingredients_dict):
     # dictionary to store ingedient and product frequency
     percent_ingredient_in_products_dict = {}
 
+    # loop through the ingredients dict and set the percentage of each ingredient
     for ingredient, products in ingredients_dict.items():
-        print(ingredient, len(products))
         percent_ingredient_in_products_dict[ingredient] = int((round(len(products)/total_number_of_tracked_products, 2)) * 100)
-    print(percent_ingredient_in_products_dict)
 
     return percent_ingredient_in_products_dict
+
+def sort_ingredients_by_product_percentage(percentage_dict):
+    '''
+    Sort the ingredients by the highest product percentage.
+
+    Arguments:
+        percentage_dict(dict), the ingredients and their associated product inclusion.
+    '''
+    # sort by value
+    sorted_ingredients_by_percentage = sorted(percentage_dict.items(), key=operator.itemgetter(1), reverse=True)
+    return sorted_ingredients_by_percentage
 
 if __name__ == "__main__":
     app.run(debug=True)
