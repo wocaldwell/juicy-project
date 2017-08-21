@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <div id="nav" class="header">
             <nav>
                 <ul class="nav nav-pills pull-right">
                     <li role="presentation" class=""><a href="#products">Juicy Products</a>
@@ -16,7 +16,7 @@
                     <li role="presentation"><a href="#calories">Juicy Calories</a>
                     </li>
                     <li role="presentation"><a href="#ingredients">Juicy Ingredients</a>
-                    <li role="presentation"><a href="#chartHeader">Juicy Ingredients</a>
+                    <li role="presentation"><a href="#chartHeader">Juicy Chart</a>
                     </li>
                 </ul>
             </nav>
@@ -28,10 +28,12 @@
         </div>
         <h2 id="products">Juicy Products</h2>
             <p>Did you know that Juicy Juice makes {{juicy_total_products}} products?</p>
+            <a class="pull-right" href="#nav">back to top</a>
         <h2 id="calories">Juicy Calories</h2>
             <p>Did you know that on average, Juicy Juice drinks have {{average_calories_per_ounce}} calories per ounce?</p>
+            <a class="pull-right" href="#nav">back to top</a>
         <h2 id="ingredients">Juicy Ingredients</h2>
-            <p>Here's all of the most common Juicy Juice ingredients and the products in which they are found.</p>
+            <p>Here's all of the Juicy Juice ingredients and the products in which they are found.</p>
             <table class="table table-inverse">
                 <thead>
                     <th>Ingredient</th>
@@ -41,7 +43,12 @@
                     {% for ingredient, products in juicy_ingredients.items()%}
                     <tr>
                         <td>{{ingredient}}</td>
-                        <td>{{products}}</td>
+                        <td>
+                            {% for product in products%}
+                            <p>{{product}}</p>
+                            {% endfor %}
+                            <a class="pull-right" href="#nav">back to top</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -51,12 +58,14 @@
             <div class="chartContainer">
                 <canvas id="chart"></canvas>
             </div>
+
         <footer class="footer row">
             <div class="col-xs-9">
                 <p>&copy; JuciyFacts 2017</p>
             </div>
             <div class="col-xs-3">
-                <a href="http://www.nutritionix.com/api"><img src="https://d2eawub7utcl6.cloudfront.net/images/poweredby_nutritionix_api.png" alt="powered by nutritionix"></a>
+                <a class="pull-right" href="#nav">back to top</a>
+                <a class="pull-right" href="http://www.nutritionix.com/api"><img src="https://d2eawub7utcl6.cloudfront.net/images/poweredby_nutritionix_api.png" alt="powered by nutritionix"></a>
             </div>
         </footer>
     </div>
@@ -70,7 +79,7 @@
             ],
             datasets : [
                 {
-                    fillColor: "rgba(151,187,205,0.2)",
+                    fillColor: "rgba(251, 89, 140,0.2)",
                     strokeColor: "rgba(151,187,205,1)",
                     pointColor: "rgba(151,187,205,1)",
                     data : [
@@ -83,12 +92,12 @@
         }
 
         // get bar chart canvas
-        var mychart = document.getElementById("chart").getContext("2d");
+        var juicyChart = document.getElementById("chart").getContext("2d");
 
         steps = 10
         max = 100
         // draw bar chart
-        new Chart(mychart).Bar(barData, {
+        new Chart(juicyChart).Bar(barData, {
             scaleOverride: true,
             scaleSteps: steps,
             scaleStepWidth: Math.ceil(max / steps),
@@ -102,7 +111,5 @@
             maintainAspectRatio: false
         });
     </script>
-
-    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> -->
 </body>
 </html>

@@ -47,12 +47,6 @@ def render_juicy_facts():
 
     return render_template("index.html", juicy_total_products = juicy_total_products, average_calories_per_ounce = round(juicy_average_calories_per_ounce["average"], 2), juicy_ingredients = juicy_ingredients, values=chart_values, labels=chart_labels)
 
-@app.route("/chart")
-def chart():
-    labels = [1,2,3,4,5,6,7,8]
-    values = [10,9,8,7,6,4,7,8]
-    return render_template('chart.html', values=values, labels=labels)
-
 def get_all_products_by_brand_id(brand_id):
     '''
     Send a request to the nutritionix api for all products that match the brand id.
