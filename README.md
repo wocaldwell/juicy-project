@@ -6,7 +6,7 @@ The Nutritionix API contains nutritional information for a wide variety of food 
 3. Create an index from all unique Juicy Juice ingredients to the products that contain them (e.g., the ingredient "mango puree" is in Tropical Mango Juice, Mango Blast, Banana Mango Punch). The data here is dirty; the final results don’t have to be perfect.
 4. Build a simple web page to display the results of questions 1-3 and host it on Heroku (https://www.heroku.com/).  Include an exported jpg/png visualization of the Nutritionix data that shows something interesting about the data using a  visualization tool of your choice (an Excel chart is acceptable).  Make sure to include a brief explanation of the visualization.
 
-#### To see the deployed project click [here]()!
+#### To see the deployed project click [here](https://afternoon-spire-21273.herokuapp.com/)!
 
 ## Getting Started
 
