@@ -21,8 +21,7 @@ Install [Python 3.6](https://www.python.org/downloads/)
 Clone repo:
 
 ```
-git clone https://github.com/handy-pandas/bangazon_orientation_api.git
-cd bangazon_orientation_api
+git clone https://github.com/wocaldwell/juicy-project.git
 ```
 Install the project dependencies:
 
@@ -41,7 +40,7 @@ nano ~/.zshrc
 export JUICYID="YOUR NUTRITIONIX ID"
 export JUICYKEY="YOUR NUTRITIONIX KEY"
 ```
-then press `control + x` to exit, `y` to confirm the changes and then `return` to write to the file.
+Then press `control + x` to exit, `y` to confirm the changes and then `return` to write to the file.
 
 
 ### Running Project Locally
