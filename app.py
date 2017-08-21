@@ -225,7 +225,7 @@ def get_ingredient_frequency(ingredients_dict):
     # number of products
     total_number_of_tracked_products = 75
 
-    # dictionary to store ingedient and product frequency
+    # dictionary to store ingredient and product frequency
     percent_ingredient_in_products_dict = {}
 
     # loop through the ingredients dict and set the percentage of each ingredient
@@ -241,9 +241,9 @@ def sort_ingredients_by_product_percentage(percentage_dict):
     Arguments:
         percentage_dict(dict), the ingredients and their associated product inclusion.
     '''
-    # sort by value
+    # sort by value, reverse makes it descending
     sorted_ingredients_by_percentage = sorted(percentage_dict.items(), key=operator.itemgetter(1), reverse=True)
     return sorted_ingredients_by_percentage
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
