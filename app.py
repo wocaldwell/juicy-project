@@ -49,7 +49,7 @@ def render_juicy_facts():
     chart_labels = []
     chart_values = []
 
-    # loop through top five ingredients and assign labels and values
+    # loop through top ten ingredients and assign labels and values
     for ingredient in top_ten_ingredients:
         chart_labels.append(ingredient[0])
         chart_values.append(ingredient[1])
@@ -84,7 +84,7 @@ def get_all_products_by_brand_id(brand_id):
         Loop throught the api response and add each product object to the all_products list.
 
         Arguments:
-            request(json), a "get" request to the nutritionix api.
+            request(dict), a "get" request to the nutritionix api.
         '''
         for hit in request["hits"]:
             all_products.append(hit)
